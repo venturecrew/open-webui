@@ -5,8 +5,12 @@
 
 	import markedExtension from '$lib/utils/marked/extension';
 	import markedKatexExtension from '$lib/utils/marked/katex-extension';
+	import { disableSingleTilde } from '$lib/utils/marked/strikethrough-extension';
+	import { mentionExtension } from '$lib/utils/marked/mention-extension';
 
 	import MarkdownTokens from './Markdown/MarkdownTokens.svelte';
+	import footnoteExtension from '$lib/utils/marked/footnote-extension';
+	import citationExtension from '$lib/utils/marked/citation-extension';
 
 	export let id = '';
 	export let content;
@@ -15,6 +19,7 @@
 	export let save = false;
 	export let preview = false;
 
+	export let paragraphTag = 'p';
 	export let editCodeBlock = true;
 	export let topPadding = false;
 
@@ -37,11 +42,17 @@
 
 	marked.use(markedKatexExtension(options));
 	marked.use(markedExtension(options));
+	marked.use(citationExtension(options));
+	marked.use(footnoteExtension(options));
+	marked.use(disableSingleTilde);
+	marked.use({
+		extensions: [mentionExtension({ triggerChar: '@' }), mentionExtension({ triggerChar: '#' })]
+	});
 
 	$: (async () => {
 		if (content) {
 			tokens = marked.lexer(
-				replaceTokens(processResponseContent(content), sourceIds, model?.name, $user?.name)
+				replaceTokens(processResponseContent(content), model?.name, $user?.name)
 			);
 		}
 	})();
@@ -54,7 +65,9 @@
 		{done}
 		{save}
 		{preview}
+		{paragraphTag}
 		{editCodeBlock}
+		{sourceIds}
 		{topPadding}
 		{onTaskClick}
 		{onSourceClick}

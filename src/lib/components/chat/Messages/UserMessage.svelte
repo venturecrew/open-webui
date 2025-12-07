@@ -6,7 +6,7 @@
 	import { models, settings } from '$lib/stores';
 	import { user as _user } from '$lib/stores';
 	import { copyToClipboard as _copyToClipboard, formatDate } from '$lib/utils';
-	import { WEBUI_BASE_URL } from '$lib/constants';
+	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 
 	import Name from './Name.svelte';
 	import ProfileImage from './ProfileImage.svelte';
@@ -81,7 +81,7 @@
 	};
 
 	const editMessageConfirmHandler = async (submit = true) => {
-		if (!editedContent && editedFiles.length === 0) {
+		if (!editedContent && (editedFiles ?? []).length === 0) {
 			toast.error($i18n.t('Please enter a message or attach a file.'));
 			return;
 		}
@@ -124,10 +124,7 @@
 	{#if !($settings?.chatBubble ?? true)}
 		<div class={`shrink-0 ltr:mr-3 rtl:ml-3 mt-1`}>
 			<ProfileImage
-				src={message.user
-					? ($models.find((m) => m.id === message.user)?.info?.meta?.profile_image_url ??
-						`${WEBUI_BASE_URL}/user.png`)
-					: (user?.profile_image_url ?? `${WEBUI_BASE_URL}/user.png`)}
+				src={`${WEBUI_API_BASE_URL}/users/${user.id}/profile/image`}
 				className={'size-8 user-message-profile-image'}
 			/>
 		</div>
@@ -153,7 +150,16 @@
 								: 'invisible group-hover:visible transition'}"
 						>
 							<Tooltip content={dayjs(message.timestamp * 1000).format('LLLL')}>
-								<span class="line-clamp-1">{formatDate(message.timestamp * 1000)}</span>
+								<!-- $i18n.t('Today at {{LOCALIZED_TIME}}') -->
+								<!-- $i18n.t('Yesterday at {{LOCALIZED_TIME}}') -->
+								<!-- $i18n.t('{{LOCALIZED_DATE}} at {{LOCALIZED_TIME}}') -->
+
+								<span class="line-clamp-1"
+									>{$i18n.t(formatDate(message.timestamp * 1000), {
+										LOCALIZED_TIME: dayjs(message.timestamp * 1000).format('LT'),
+										LOCALIZED_DATE: dayjs(message.timestamp * 1000).format('L')
+									})}</span
+								>
 							</Tooltip>
 						</div>
 					{/if}
@@ -168,7 +174,12 @@
 						: 'invisible group-hover:visible transition text-gray-400'}"
 				>
 					<Tooltip content={dayjs(message.timestamp * 1000).format('LLLL')}>
-						<span class="line-clamp-1">{formatDate(message.timestamp * 1000)}</span>
+						<span class="line-clamp-1"
+							>{$i18n.t(formatDate(message.timestamp * 1000), {
+								LOCALIZED_TIME: dayjs(message.timestamp * 1000).format('LT'),
+								LOCALIZED_DATE: dayjs(message.timestamp * 1000).format('L')
+							})}</span
+						>
 					</Tooltip>
 				</div>
 			</div>
@@ -189,7 +200,7 @@
 										name={file.name}
 										type={file.type}
 										size={file?.size}
-										colorClassName="bg-white dark:bg-gray-850 "
+										small={true}
 									/>
 								{/if}
 							</div>
@@ -290,7 +301,7 @@
 						<div>
 							<button
 								id="save-edit-message-button"
-								class=" px-4 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-200 transition rounded-3xl"
+								class="px-3.5 py-1.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-200 transition rounded-3xl"
 								on:click={() => {
 									editMessageConfirmHandler(false);
 								}}
@@ -302,7 +313,7 @@
 						<div class="flex space-x-1.5">
 							<button
 								id="close-edit-message-button"
-								class="px-4 py-2 bg-white dark:bg-gray-900 hover:bg-gray-100 text-gray-800 dark:text-gray-100 transition rounded-3xl"
+								class="px-3.5 py-1.5 bg-white dark:bg-gray-900 hover:bg-gray-100 text-gray-800 dark:text-gray-100 transition rounded-3xl"
 								on:click={() => {
 									cancelEditMessage();
 								}}
@@ -312,7 +323,7 @@
 
 							<button
 								id="confirm-edit-message-button"
-								class=" px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-850 text-gray-100 dark:text-gray-800 transition rounded-3xl"
+								class="px-3.5 py-1.5 bg-gray-900 dark:bg-white hover:bg-gray-850 text-gray-100 dark:text-gray-800 transition rounded-3xl"
 								on:click={() => {
 									editMessageConfirmHandler();
 								}}
@@ -327,7 +338,7 @@
 					<div class="flex {($settings?.chatBubble ?? true) ? 'justify-end pb-1' : 'w-full'}">
 						<div
 							class="rounded-3xl {($settings?.chatBubble ?? true)
-								? `max-w-[90%] px-5 py-2  bg-gray-50 dark:bg-gray-850 ${
+								? `max-w-[90%] px-4 py-1.5  bg-gray-50 dark:bg-gray-850 ${
 										message.files ? 'rounded-tr-lg' : ''
 									}`
 								: ' w-full'}"
